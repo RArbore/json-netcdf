@@ -32,12 +32,15 @@ def parse(json, nc_root, hierarchy):
                 cur_group.createDimension(dim_name, dim);
             nc_var = nc_root.createVariable("/" + "/".join(hierarchy + [name]), np_data.dtype, tuple(dim_names))
             nc_var[:] = np_data
-        elif isinstance(data, numbers.Number):
+        elif isinstance(data, numbers.Number) and not isinstance(data, bool):
             np_data = np.array(data)
             nc_var = nc_root.createVariable("/" + "/".join(hierarchy + [name]), np_data.dtype)
             nc_var[:] = np_data
         else:
-            setattr(cur_group, name, data)
+            try:
+                setattr(cur_group, name, data)
+            except:
+                setattr(cur_group, name, str(data)
 
 def walktree(root):
     yield root.groups.values()
