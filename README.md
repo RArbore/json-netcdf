@@ -1,6 +1,6 @@
-#json-to-netcdf
+# json-to-netcdf
 
-usage: json-to-netcdf.py [-h] input output
+`usage: json-to-netcdf.py [-h] input output`
 
 json-to-netcdf converts JSON files to netCDF4 files.
 
