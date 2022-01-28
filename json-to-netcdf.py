@@ -40,7 +40,7 @@ def parse(json, nc_root, hierarchy):
             try:
                 setattr(cur_group, name, data)
             except:
-                setattr(cur_group, name, str(data)
+                setattr(cur_group, name, str(data))
 
 def walktree(root):
     yield root.groups.values()
