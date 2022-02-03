@@ -53,7 +53,7 @@ def parse_netcdf_to_json(nc_root, hierarchy):
         if np_arr.shape == ():
             json[variable] = np_arr[()].item()
         else:
-            json[variable] = list(np_arr)
+            json[variable] = np_arr.tolist()
     for group in cur_group.groups:
         sub_json = parse_netcdf_to_json(nc_root, hierarchy + [group])
         try:
@@ -78,7 +78,6 @@ if args.input.endswith(".json") and args.output.endswith(".nc"):
         json_data = json.loads(json_file.read())
     nc_data = Dataset(args.output, "w", format="NETCDF4")
     parse_json_to_netcdf(json_data, nc_data, [])
-    print(nc_data)
     for children in walktree(nc_data):
         for child in children:
             print(child)
@@ -87,7 +86,6 @@ elif args.input.endswith(".nc") and args.output.endswith(".json"):
     nc_data = Dataset(args.input, "r", format="NETCDF4")
     json_data = parse_netcdf_to_json(nc_data, [])
     nc_data.close()
-    print(json_data)
     with open(args.output, "w") as json_file:
         json.dump(json_data, json_file, indent=4)
 else:
