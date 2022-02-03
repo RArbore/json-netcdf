@@ -45,9 +45,20 @@ def parse_json_to_netcdf(json, nc_root, hierarchy):
 def parse_netcdf_to_json(nc_root, hierarchy):
     hierarchy = deepcopy(hierarchy)
     cur_group = nc_root["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_root
+    json = {}
     for group in cur_group.groups:
-        print(hierarchy + [group])
-        parse_netcdf_to_json(nc_root, hierarchy + [group])
+        sub_json = parse_netcdf_to_json(nc_root, hierarchy + [group])
+        try:
+            index = int(group.split("[")[1].split("]")[0])
+        except:
+            index = None
+        if index == 0:
+            json[group.split("[")[0]] = [sub_json]
+        elif not index is None:
+            json[group.split("[")[0]] = json[group.split("[")[0]] + [sub_json]
+        else:
+            json[group] = sub_json
+    return json
 
 def walktree(root):
     yield root.groups.values()
