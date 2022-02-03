@@ -46,6 +46,14 @@ def parse_netcdf_to_json(nc_root, hierarchy):
     hierarchy = deepcopy(hierarchy)
     cur_group = nc_root["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_root
     json = {}
+    for attr_name in cur_group.ncattrs():
+        json[attr_name] = getattr(cur_group, attr_name)
+    for variable in cur_group.variables:
+        np_arr = np.array(cur_group[variable][:])
+        if np_arr.shape == ():
+            json[variable] = np_arr[()].item()
+        else:
+            json[variable] = list(np_arr)
     for group in cur_group.groups:
         sub_json = parse_netcdf_to_json(nc_root, hierarchy + [group])
         try:
