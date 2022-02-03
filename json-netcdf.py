@@ -7,23 +7,23 @@ import re
 
 from netCDF4 import Dataset
 
-argparser = ArgumentParser(description="Parse JSON format to netCDF format.")
-argparser.add_argument("input", help="Input JSON file path.")
-argparser.add_argument("output", help="Output netCDF file path.")
+argparser = ArgumentParser(description="Parse between JSON and netCDF formats.")
+argparser.add_argument("input", help="Input file path.")
+argparser.add_argument("output", help="Output file path.")
 args = argparser.parse_args()
 
-def parse(json, nc_root, hierarchy):
+def parse_json_to_netcdf(json, nc_root, hierarchy):
     hierarchy = deepcopy(hierarchy)
     cur_group = nc_data["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_data
 
     for name, data in json.items():
         if isinstance(data, dict):
             nc_root.createGroup("/" + "/".join(hierarchy + [name]))
-            parse(data, nc_root, hierarchy + [name])
+            parse_json_to_netcdf(data, nc_root, hierarchy + [name])
         elif isinstance(data, list) and not all(isinstance(x, numbers.Number) for x in data):
             for obj, i in zip(data, range(len(data))):
                 nc_root.createGroup("/" + "/".join(hierarchy + [name + "[" + str(i) + "]"]))
-                parse(obj, nc_root, hierarchy + [name + "[" + str(i) + "]"])
+                parse_json_to_netcdf(obj, nc_root, hierarchy + [name + "[" + str(i) + "]"])
         elif isinstance(data, list):
             np_data = np.array(data)
             dims = np_data.shape
@@ -42,17 +42,31 @@ def parse(json, nc_root, hierarchy):
             except:
                 setattr(cur_group, name, str(data))
 
+def parse_netcdf_to_json(nc_root, json, hierarchy):
+    print(nc_root.groups)
+
 def walktree(root):
     yield root.groups.values()
     for value in root.groups.values():
         yield from walktree(value)
 
-with open(args.input) as json_file:
-    json_data = json.loads(json_file.read())
-nc_data = Dataset(args.output, "w", format="NETCDF4")
-parse(json_data, nc_data, [])
-print(nc_data)
-for children in walktree(nc_data):
-    for child in children:
-        print(child)
-nc_data.close()
+if args.input.endswith(".json") and args.output.endswith(".nc"):
+    with open(args.input) as json_file:
+        json_data = json.loads(json_file.read())
+    nc_data = Dataset(args.output, "w", format="NETCDF4")
+    parse_json_to_netcdf(json_data, nc_data, [])
+    print(nc_data)
+    for children in walktree(nc_data):
+        for child in children:
+            print(child)
+    nc_data.close()
+elif args.input.endswith(".nc") and args.output.endswith(".json"):
+    nc_data = Dataset(args.input, "r", format="NETCDF4")
+    json_data = {}
+    parse_netcdf_to_json(nc_data, json_data, [])
+    nc_data.close()
+    print(json_data)
+    with open(args.output, "w") as json_file:
+        json.dump(json_data, json_file, indent=4)
+else:
+    print("Please either specify an input JSON and output netCDF or an input netCDF and output JSON.")
