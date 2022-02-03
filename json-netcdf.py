@@ -14,7 +14,7 @@ args = argparser.parse_args()
 
 def parse_json_to_netcdf(json, nc_root, hierarchy):
     hierarchy = deepcopy(hierarchy)
-    cur_group = nc_data["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_data
+    cur_group = nc_root["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_root
 
     for name, data in json.items():
         if isinstance(data, dict):
@@ -42,8 +42,12 @@ def parse_json_to_netcdf(json, nc_root, hierarchy):
             except:
                 setattr(cur_group, name, str(data))
 
-def parse_netcdf_to_json(nc_root, json, hierarchy):
-    print(nc_root.groups)
+def parse_netcdf_to_json(nc_root, hierarchy):
+    hierarchy = deepcopy(hierarchy)
+    cur_group = nc_root["/" + "/".join(hierarchy)] if len(hierarchy) > 0 else nc_root
+    for group in cur_group.groups:
+        print(hierarchy + [group])
+        parse_netcdf_to_json(nc_root, hierarchy + [group])
 
 def walktree(root):
     yield root.groups.values()
@@ -62,8 +66,7 @@ if args.input.endswith(".json") and args.output.endswith(".nc"):
     nc_data.close()
 elif args.input.endswith(".nc") and args.output.endswith(".json"):
     nc_data = Dataset(args.input, "r", format="NETCDF4")
-    json_data = {}
-    parse_netcdf_to_json(nc_data, json_data, [])
+    json_data = parse_netcdf_to_json(nc_data, [])
     nc_data.close()
     print(json_data)
     with open(args.output, "w") as json_file:
