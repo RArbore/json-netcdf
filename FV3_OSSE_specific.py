@@ -2,8 +2,72 @@ import scipy.interpolate
 import numpy as np
 import json
 
-def write_modtran6_json_file():
-    pass
+def write_modtran6_json_file(fname,
+                             output_fname,
+                             observer_azimuth_angles,
+                             observer_zenith_angles,
+                             sza,
+                             case_name,
+                             case_description,
+                             nstr,
+                             alts,
+                             press,
+                             temps,
+                             h2o_vals,
+                             co2_vals,
+                             o3_vals,
+                             n2o_vals,
+                             co_vals,
+                             ch4_vals,
+                             cloud_alts,
+                             cliq_prof,
+                             cice_prof):
+    out_json = { "MODTRAN" :
+                 [
+                    { "MODTRANINPUT" :
+                      { "NAME" : case_name,
+                        "DESCRIPTION" : case_description,
+                        "CASE" : 0,
+                        "RTOPTIONS" :
+                        {
+                            "MODTRN" : "RT_MODTRAN",
+                            "LYMOLC" : False,
+                            "T_BEST" : False,
+                            "IEMSCT" : "RT_SOLAR_AND_THERMAL",
+                            "IMULT" : "RT_DISORT", # or RT_DISORT_AT_OBS
+                            "DISALB" : True,
+                            "NSTR" : nstr,
+                            "SOLCON" : 0.0
+                        },
+                        "ATMOSPHERE" : {
+                            "MODEL" : "ATM_USER_ALT_PROFILE",
+                            "MDEF" : 1,
+                            "CO2MX" : 330.0,
+                            "HMODEL" : "New Atm Profile",
+                            "NPROF" : 9, # possibly change this
+                            "NLAYERS" : alts.shape[0],
+                            "PROFILES" : [
+                                {
+                                    "TYPE" : "PROF_ALTITUDE",
+                                    "UNITS" : "UNT_KILOMETERS",
+                                    "PROFILE" : list(map(lambda x: round(x, 1), alts.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_PRESSURE",
+                                    "UNITS" : "UNT_PMILLIBAR",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), press.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_TEMPERATURE",
+                                    "UNITS" : "UNT_TKELVIN",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), temps.tolist()))
+                                }
+                            ],
+                        }
+                      }
+                    }
+                 ]
+               }
 
 alts = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0])
 press = np.array([1013.25165, 898.7637, 795.0062, 701.212, 616.59973, 540.48126, 472.17044, 411.04807, 356.50916, 308.00012, 264.98944, 226.99094, 193.99063, 165.7897, 141.6997, 121.11009, 103.5195, 88.49714, 75.6517, 64.67406, 55.293205, 47.289112, 40.47482, 34.668102, 29.717024, 25.491879, 17.42908, 11.969957, 8.257732, 5.7459197, 4.041395, 2.8714008, 2.0596993, 1.4910045, 1.0885973, 0.79778993, 0.42524916, 0.21957971, 0.109290056, 0.052209016, 0.023881052, 0.010523967, 0.0044568186, 0.0018359008, 7.596596E-4, 3.201086E-4, 1.4477066E-4, 7.1041926E-5, 4.0096143E-5, 2.538202E-5])
