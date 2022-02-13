@@ -23,50 +23,133 @@ def write_modtran6_json_file(fname,
                              cliq_prof,
                              cice_prof):
     out_json = { "MODTRAN" :
-                 [
-                    { "MODTRANINPUT" :
-                      { "NAME" : case_name,
-                        "DESCRIPTION" : case_description,
-                        "CASE" : 0,
-                        "RTOPTIONS" :
-                        {
-                            "MODTRN" : "RT_MODTRAN",
-                            "LYMOLC" : False,
-                            "T_BEST" : False,
-                            "IEMSCT" : "RT_SOLAR_AND_THERMAL",
-                            "IMULT" : "RT_DISORT", # or RT_DISORT_AT_OBS
-                            "DISALB" : True,
-                            "NSTR" : nstr,
-                            "SOLCON" : 0.0
-                        },
-                        "ATMOSPHERE" : {
-                            "MODEL" : "ATM_USER_ALT_PROFILE",
-                            "MDEF" : 1,
-                            "CO2MX" : 330.0,
-                            "HMODEL" : "New Atm Profile",
-                            "NPROF" : 9, # possibly change this
-                            "NLAYERS" : alts.shape[0],
-                            "PROFILES" : [
-                                {
-                                    "TYPE" : "PROF_ALTITUDE",
-                                    "UNITS" : "UNT_KILOMETERS",
-                                    "PROFILE" : list(map(lambda x: round(x, 1), alts.tolist()))
-                                },
-                                {
-                                    "TYPE" : "PROF_PRESSURE",
-                                    "UNITS" : "UNT_PMILLIBAR",
-                                    "PROFILE" : list(map(lambda x: round(x, 5), press.tolist()))
-                                },
-                                {
-                                    "TYPE" : "PROF_TEMPERATURE",
-                                    "UNITS" : "UNT_TKELVIN",
-                                    "PROFILE" : list(map(lambda x: round(x, 5), temps.tolist()))
-                                }
-                            ],
+                  [
+                     { "MODTRANINPUT" :
+                        { "NAME" : case_name,
+                           "DESCRIPTION" : case_description,
+                           "CASE" : 0,
+                           "RTOPTIONS" :
+                           {
+                               "MODTRN" : "RT_MODTRAN",
+                               "LYMOLC" : False,
+                               "T_BEST" : False,
+                               "IEMSCT" : "RT_SOLAR_AND_THERMAL",
+                               "IMULT" : "RT_DISORT", # or RT_DISORT_AT_OBS
+                               "DISALB" : True,
+                               "NSTR" : nstr,
+                               "SOLCON" : 0.0
+                           },
+                           "ATMOSPHERE" : {
+                               "MODEL" : "ATM_USER_ALT_PROFILE",
+                               "MDEF" : 1,
+                               "CO2MX" : 330.0,
+                               "HMODEL" : "New Atm Profile",
+                               "NPROF" : 9, # possibly change this
+                               "NLAYERS" : alts.shape[0],
+                               "PROFILES" : [
+                                   {
+                                       "TYPE" : "PROF_ALTITUDE",
+                                       "UNITS" : "UNT_KILOMETERS",
+                                       "PROFILE" : list(map(lambda x: round(x, 1), alts.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_PRESSURE",
+                                       "UNITS" : "UNT_PMILLIBAR",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), press.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_TEMPERATURE",
+                                       "UNITS" : "UNT_TKELVIN",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), temps.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_H2O",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), h2o_vals.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_CO2",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), co2_vals.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_O3",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), o3_vals.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_N2O",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), n2o_vals.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_CO",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), co_vals.tolist()))
+                                   },
+                                   {
+                                       "TYPE" : "PROF_CH4",
+                                       "UNITS" : "UNT_DPPMV",
+                                       "PROFILE" : list(map(lambda x: round(x, 5), ch4_vals.tolist()))
+                                   }
+                               ],
+                           },
+                           "AEROSOLS" : {
+                               "IHAZE" : "AER_RURAL",
+                               "ICLD" : "CLOUD_CUMULUS",
+                               "VIS" : 5.0, # change this
+                               "CLDALT" : {
+                                   "NCRALT" : cloud_alts.shape[0],
+                                   "ZPCLD" : list(map(lambda x: round(x, 2), cloud_alts.tolist())),
+                                   "CLD" : list(map(lambda x: round(x, 3), cliq_prof.tolist())),
+                                   "CLDICE" : list(map(lambda x: round(x, 3), cice_prof.tolist())),
+                                   "RR" : [0.0] * cloud_alts.shape[0]
+                               }
+                           },
+                           "GEOMETRY" : {
+                               "IDAY" : 16,
+                               "IPARM" : 12,
+                               "PARM1" : 180.0,
+                               "PARM2" : round(sza, 1),
+                               "GMTIME" : 15.5,
+                               "TRUEAZ" : 270.0,
+                               "NLOS" : observer_azimuth_angles.shape[0] + 1,
+                               "MLOS" : [
+                                   {
+                                       "H1ALT" : 705.0,
+                                       "OBSZEN" : round(observer_zenith_angles.tolist()[0], 1),
+                                       "LENN" : 1
+                                   }
+                               ] + list(map(lambda angles: {"H1ALT" : 705.0, "OBSZEN" : angles[1][angles[0]], "AZ_INP" : angles[2][angles[0]], "LENN" : 1}, zip(list(range(len(observer_azimuth_angles.shape[0]))), observer_zenith_angles.tolist(), observer_azimuth_angles.tolist())))
+                           },
+                           "SURFACE" : {
+                               "SURFTYPE" : "REFL_LAMBER_MODEL",
+                               "SURREF" : 0.4,
+                               "NSURF" : 2,
+                               "SURFA" : { "CSALB" : "LAMB_OCEAN_WATER" },
+                               "SURFNLOS" : observer_azimuth_angles.shape[0] + 1,
+                               "SURFLOS" : [{ "CSALB" : "LAMB_OCEAN_WATER" }] * observer_azimuth_angles.shape[0] + 1
+                           },
+                           "SPECTRAL" : {
+                               "V1" : 300.0,
+                               "V2" : 1000.0,
+                               "DV" : 1.0,
+                               "FWHM" : 2.0,
+                               "YFLAG" : "R",
+                               "XFLAG" : "N",
+                               "FLAGS" : "NTA   T",
+                               "LBMNAM" : "T",
+                               "BMNAME" : "15_2013"
+                           },
+                           "FILEOPTIONS" : {
+                               "MSGPRNT" : "MSG_DEBUG",
+                               "JSONOPT" : "WRT_ALL",
+                               "NOPRNT" : 1,
+                               "JSONPRNT" : output_fname + ".json"
+                           }
                         }
-                      }
-                    }
-                 ]
+                     }
+                  ]
                }
 
 alts = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0])
