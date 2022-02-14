@@ -120,7 +120,10 @@ def write_modtran6_json_file(fname,
                                        "OBSZEN" : round(observer_zenith_angles.tolist()[0], 1),
                                        "LENN" : 1
                                    }
-                               ] + list(map(lambda angles: {"H1ALT" : 705.0, "OBSZEN" : angles[1][angles[0]], "AZ_INP" : angles[2][angles[0]], "LENN" : 1}, zip(list(range(len(observer_azimuth_angles.shape[0]))), observer_zenith_angles.tolist(), observer_azimuth_angles.tolist())))
+                               ] + list(map(lambda angles: {"H1ALT" : 705.0,
+                                                            "OBSZEN" : angles[0],
+                                                            "AZ_INP" : angles[1],
+                                                            "LENN" : 1}, zip(observer_zenith_angles.tolist(), observer_azimuth_angles.tolist())))
                            },
                            "SURFACE" : {
                                "SURFTYPE" : "REFL_LAMBER_MODEL",
@@ -128,7 +131,7 @@ def write_modtran6_json_file(fname,
                                "NSURF" : 2,
                                "SURFA" : { "CSALB" : "LAMB_OCEAN_WATER" },
                                "SURFNLOS" : observer_azimuth_angles.shape[0] + 1,
-                               "SURFLOS" : [{ "CSALB" : "LAMB_OCEAN_WATER" }] * observer_azimuth_angles.shape[0] + 1
+                               "SURFLOS" : [{ "CSALB" : "LAMB_OCEAN_WATER" }] * (observer_azimuth_angles.shape[0] + 1)
                            },
                            "SPECTRAL" : {
                                "V1" : 300.0,
@@ -151,6 +154,7 @@ def write_modtran6_json_file(fname,
                      }
                   ]
                }
+    json.dump(json_data, open(fname, "w"), indent=4)
 
 alts = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0])
 press = np.array([1013.25165, 898.7637, 795.0062, 701.212, 616.59973, 540.48126, 472.17044, 411.04807, 356.50916, 308.00012, 264.98944, 226.99094, 193.99063, 165.7897, 141.6997, 121.11009, 103.5195, 88.49714, 75.6517, 64.67406, 55.293205, 47.289112, 40.47482, 34.668102, 29.717024, 25.491879, 17.42908, 11.969957, 8.257732, 5.7459197, 4.041395, 2.8714008, 2.0596993, 1.4910045, 1.0885973, 0.79778993, 0.42524916, 0.21957971, 0.109290056, 0.052209016, 0.023881052, 0.010523967, 0.0044568186, 0.0018359008, 7.596596E-4, 3.201086E-4, 1.4477066E-4, 7.1041926E-5, 4.0096143E-5, 2.538202E-5])
@@ -203,12 +207,12 @@ for i in range(lat.shape[0]):
         co_vals_fv3 = scipy.interpolate.interp1d(press, co_vals, kind="linear")(press_fv3)
         ch4_vals_fv3 = scipy.interpolate.interp1d(press, ch4_vals, kind="linear")(press_fv3)
 
-        fv3_observer_zenith_angles = np.zeros((1, VZA.shape[2] * RAA.shape[2]))
-        fv3_observer_azimuth_angles = np.zeros((1, VZA.shape[2] * RAA.shape[2]))
+        fv3_observer_zenith_angles = np.zeros((VZA.shape[2] * RAA.shape[2]))
+        fv3_observer_azimuth_angles = np.zeros((VZA.shape[2] * RAA.shape[2]))
 
         for k in range(RAA.shape[2]):
-            fv3_observer_zenith_angles[0, k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (180 - VZA[:, i, :]).reshape(-1, order = "F")
-            fv3_observer_azimuth_angles[0, k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (RAA[:, i, :]).reshape(-1, order = "F")
+            fv3_observer_zenith_angles[k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (180 - VZA[:, i, :]).reshape(-1, order = "F")
+            fv3_observer_azimuth_angles[k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (RAA[:, i, :]).reshape(-1, order = "F")
 
         cloud_alts = np.array([0.0, 0.09, 0.11, 2.49, 2.51])
         cliqwp_vals = np.array([0.0, 0.0, 0.001, 0.001, 0.0])
