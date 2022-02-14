@@ -1,4 +1,5 @@
 import scipy.interpolate
+import multiprocessing
 import numpy as np
 import json
 
@@ -188,8 +189,11 @@ SZA = np.array(json_data["SZA"])
 VZA = np.array(json_data["VZA"])
 RAA = np.array(json_data["RAA"])
 
+processes = []
+
 for i in range(lat.shape[0]):
     for j in range(SZA.shape[2]):
+        print("Starting case " + str(i) + " w/ SZA " + str(j))
         out_file_path = "FV3_modtran6_json/Libera_ADM_FV3_Input_Case_{:02d}_SZA_{:02d}.json".format(i+1, j+1)
         out_file_name = "Libera_ADM_FV3_Input_Case_{}".format(i+1)
 
@@ -218,23 +222,28 @@ for i in range(lat.shape[0]):
         cliqwp_vals = np.array([0.0, 0.0, 0.001, 0.001, 0.0])
         cicewp_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
-        write_modtran6_json_file(out_file_path,
-                                 out_file_name,
-                                 fv3_observer_azimuth_angles,
-                                 fv3_observer_zenith_angles,
-                                 SZA[0][i][j],
-                                 case_name,
-                                 case_description,
-                                 16,
-                                 alts,
-                                 press,
-                                 temps,
-                                 h2o_vals,
-                                 co2_vals,
-                                 o3_vals,
-                                 n2o_vals,
-                                 co_vals,
-                                 ch4_vals,
-                                 cloud_alts,
-                                 cliqwp_vals,
-                                 cicewp_vals)
+        p = multiprocessing.Process(target=write_modtran6_json_file, args=(out_file_path,
+                                                                           out_file_name,
+                                                                           fv3_observer_azimuth_angles,
+                                                                           fv3_observer_zenith_angles,
+                                                                           SZA[0][i][j],
+                                                                           case_name,
+                                                                           case_description,
+                                                                           16,
+                                                                           alts,
+                                                                           press,
+                                                                           temps,
+                                                                           h2o_vals,
+                                                                           co2_vals,
+                                                                           o3_vals,
+                                                                           n2o_vals,
+                                                                           co_vals,
+                                                                           ch4_vals,
+                                                                           cloud_alts,
+                                                                           cliqwp_vals,
+                                                                           cicewp_vals))
+        p.start()
+        processes.append(p)
+
+for p in processes:
+    p.join()
