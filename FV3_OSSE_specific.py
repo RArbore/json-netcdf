@@ -1,7 +1,13 @@
+from argparse import ArgumentParser
 import scipy.interpolate
 import multiprocessing
 import numpy as np
 import json
+
+argparser = ArgumentParser(description="Add structure to JSON files for MODTRAN input (specific to FV3 OSSE inputs).")
+argparser.add_argument("input", help="Input file path.")
+argparser.add_argument("output", help="Output file path.")
+args = argparser.parse_args()
 
 case_num = 0
 
@@ -176,7 +182,7 @@ cloud_alts = np.array([0.0, 0.09, 0.11, 2.49, 2.51])
 cliqwp_vals = np.array([0.0, 0.0, 0.68, 0.68, 0.0])
 cicewp_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
-input_file_path = "GFDL_FV3_OSSE_INPUT.json"
+input_file_path = args.input
 with open(input_file_path, "r") as input_file:
     json_data = json.loads(input_file.read())
 
@@ -248,9 +254,9 @@ for i in range(lat.shape[0]):
                                              cliqwp_vals,
                                              cicewp_vals)
 
-        temp_data = { "MODTRAN" : [] }
-        temp_data["MODTRAN"] = case_json
-        json.dump(temp_data, open(out_file_path, "w"), indent=4)
+        #temp_data = { "MODTRAN" : [] }
+        #temp_data["MODTRAN"] = case_json
+        #json.dump(temp_data, open(out_file_path, "w"), indent=4)
         json_data["MODTRAN"] += case_json
 
-json.dump(json_data, open("Libera_ADM_FV3_Input_Combined.json", "w"), indent=4)
+json.dump(json_data, open(args.output, "w"), indent=4)
