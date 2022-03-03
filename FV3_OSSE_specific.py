@@ -3,6 +3,8 @@ import multiprocessing
 import numpy as np
 import json
 
+case_num = 0
+
 def write_modtran6_json_file(fname,
                              output_fname,
                              observer_azimuth_angles,
@@ -23,139 +25,142 @@ def write_modtran6_json_file(fname,
                              cloud_alts,
                              cliq_prof,
                              cice_prof):
-    out_json = { "MODTRAN" :
-                  [
-                     { "MODTRANINPUT" :
-                        { "NAME" : case_name,
-                           "DESCRIPTION" : case_description,
-                           "CASE" : 0,
-                           "RTOPTIONS" :
-                           {
-                               "MODTRN" : "RT_MODTRAN",
-                               "LYMOLC" : False,
-                               "T_BEST" : False,
-                               "IEMSCT" : "RT_SOLAR_AND_THERMAL",
-                               "IMULT" : "RT_DISORT", # or RT_DISORT_AT_OBS
-                               "DISALB" : True,
-                               "NSTR" : nstr,
-                               "SOLCON" : 0.0
-                           },
-                           "ATMOSPHERE" : {
-                               "MODEL" : "ATM_USER_ALT_PROFILE",
-                               "MDEF" : 1,
-                               "CO2MX" : 330.0,
-                               "HMODEL" : "New Atm Profile",
-                               "NPROF" : 9, # possibly change this
-                               "NLAYERS" : alts.shape[0],
-                               "PROFILES" : [
-                                   {
-                                       "TYPE" : "PROF_ALTITUDE",
-                                       "UNITS" : "UNT_KILOMETERS",
-                                       "PROFILE" : list(map(lambda x: round(x, 1), alts.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_PRESSURE",
-                                       "UNITS" : "UNT_PMILLIBAR",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), press.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_TEMPERATURE",
-                                       "UNITS" : "UNT_TKELVIN",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), temps.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_H2O",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), h2o_vals.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_CO2",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), co2_vals.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_O3",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), o3_vals.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_N2O",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), n2o_vals.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_CO",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), co_vals.tolist()))
-                                   },
-                                   {
-                                       "TYPE" : "PROF_CH4",
-                                       "UNITS" : "UNT_DPPMV",
-                                       "PROFILE" : list(map(lambda x: round(x, 5), ch4_vals.tolist()))
-                                   }
-                               ],
-                           },
-                           "AEROSOLS" : {
-                               "IHAZE" : "AER_RURAL",
-                               "ICLD" : "CLOUD_CUMULUS",
-                               "VIS" : 5.0, # change this
-                               "CLDALT" : {
-                                   "NCRALT" : cloud_alts.shape[0],
-                                   "ZPCLD" : list(map(lambda x: round(x, 2), cloud_alts.tolist())),
-                                   "CLD" : list(map(lambda x: round(x, 3), cliq_prof.tolist())),
-                                   "CLDICE" : list(map(lambda x: round(x, 3), cice_prof.tolist())),
-                                   "RR" : [0.0] * cloud_alts.shape[0]
-                               }
-                           },
-                           "GEOMETRY" : {
-                               "IDAY" : 16,
-                               "IPARM" : 12,
-                               "PARM1" : 180.0,
-                               "PARM2" : round(sza, 1),
-                               "GMTIME" : 15.5,
-                               "TRUEAZ" : 270.0,
-                               "NLOS" : observer_azimuth_angles.shape[0] + 1,
-                               "MLOS" : [
-                                   {
-                                       "H1ALT" : 705.0,
-                                       "OBSZEN" : round(observer_zenith_angles.tolist()[0], 1),
-                                       "LENN" : 1
-                                   }
-                               ] + list(map(lambda angles: {"H1ALT" : 705.0,
-                                                            "OBSZEN" : angles[0],
-                                                            "AZ_INP" : angles[1],
-                                                            "LENN" : 1}, zip(observer_zenith_angles.tolist(), observer_azimuth_angles.tolist())))
-                           },
-                           "SURFACE" : {
-                               "SURFTYPE" : "REFL_LAMBER_MODEL",
-                               "SURREF" : 0.4,
-                               "NSURF" : 2,
-                               "SURFA" : { "CSALB" : "LAMB_OCEAN_WATER" },
-                               "SURFNLOS" : observer_azimuth_angles.shape[0] + 1,
-                               "SURFLOS" : [{ "CSALB" : "LAMB_OCEAN_WATER" }] * (observer_azimuth_angles.shape[0] + 1)
-                           },
-                           "SPECTRAL" : {
-                               "V1" : 300.0,
-                               "V2" : 1000.0,
-                               "DV" : 1.0,
-                               "FWHM" : 2.0,
-                               "YFLAG" : "R",
-                               "XFLAG" : "N",
-                               "FLAGS" : "NTA   T",
-                               "LBMNAM" : "T",
-                               "BMNAME" : "15_2013"
-                           },
-                           "FILEOPTIONS" : {
-                               "MSGPRNT" : "MSG_DEBUG",
-                               "JSONOPT" : "WRT_ALL",
-                               "NOPRNT" : 1,
-                               "JSONPRNT" : output_fname + ".json"
-                           }
+    global case_num
+    out_json = [
+                  { "MODTRANINPUT" :
+                     { "NAME" : case_name,
+                        "DESCRIPTION" : case_description,
+                        "CASE" : case_num,
+                        "RTOPTIONS" :
+                        {
+                            "MODTRN" : "RT_MODTRAN",
+                            "LYMOLC" : False,
+                            "T_BEST" : False,
+                            "IEMSCT" : "RT_SOLAR_AND_THERMAL",
+                            "IMULT" : "RT_DISORT", # or RT_DISORT_AT_OBS
+                            "DISALB" : True,
+                            "NSTR" : nstr,
+                            "SOLCON" : 0.0
+                        },
+                        "ATMOSPHERE" : {
+                            "MODEL" : "ATM_USER_ALT_PROFILE",
+                            "MDEF" : 1,
+                            "CO2MX" : 330.0,
+                            "HMODEL" : "New Atm Profile",
+                            "NPROF" : 9, # possibly change this
+                            "NLAYERS" : alts.shape[0],
+                            "PROFILES" : [
+                                {
+                                    "TYPE" : "PROF_ALTITUDE",
+                                    "UNITS" : "UNT_KILOMETERS",
+                                    "PROFILE" : list(map(lambda x: round(x, 1), alts.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_PRESSURE",
+                                    "UNITS" : "UNT_PMILLIBAR",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), press.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_TEMPERATURE",
+                                    "UNITS" : "UNT_TKELVIN",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), temps.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_H2O",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), h2o_vals.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_CO2",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), co2_vals.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_O3",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), o3_vals.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_N2O",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), n2o_vals.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_CO",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), co_vals.tolist()))
+                                },
+                                {
+                                    "TYPE" : "PROF_CH4",
+                                    "UNITS" : "UNT_DPPMV",
+                                    "PROFILE" : list(map(lambda x: round(x, 5), ch4_vals.tolist()))
+                                }
+                            ],
+                        },
+                        "AEROSOLS" : {
+                            "IHAZE" : "AER_RURAL",
+                            "ICLD" : "CLOUD_CUMULUS",
+                            "VIS" : 5.0, # change this
+                            "CLDALT" : {
+                                "NCRALT" : cloud_alts.shape[0],
+                                "ZPCLD" : list(map(lambda x: round(x, 2), cloud_alts.tolist())),
+                                "CLD" : list(map(lambda x: round(x, 3), cliq_prof.tolist())),
+                                "CLDICE" : list(map(lambda x: round(x, 3), cice_prof.tolist())),
+                                "RR" : [0.0] * cloud_alts.shape[0]
+                            }
+                        },
+                        "GEOMETRY" : {
+                            "IDAY" : 16,
+                            "IPARM" : 12,
+                            "PARM1" : 180.0,
+                            "PARM2" : round(sza, 1),
+                            "GMTIME" : 15.5,
+                            "TRUEAZ" : 270.0,
+                            "NLOS" : observer_azimuth_angles.shape[0] + 1,
+                            "MLOS" : [
+                                {
+                                    "H1ALT" : 705.0,
+                                    "OBSZEN" : round(observer_zenith_angles.tolist()[0], 1),
+                                    "LENN" : 1
+                                }
+                            ] + list(map(lambda angles: {"H1ALT" : 705.0,
+                                                         "OBSZEN" : round(angles[0], 1),
+                                                         "AZ_INP" : round(angles[1], 1),
+                                                         "LENN" : 1}, zip(observer_zenith_angles.tolist(), observer_azimuth_angles.tolist())))
+                        },
+                        "SURFACE" : {
+                            "SURFTYPE" : "REFL_LAMBER_MODEL",
+                            "SURREF" : 0.4,
+                            "NSURF" : 2,
+                            "SURFA" : { "CSALB" : "LAMB_OCEAN_WATER" },
+                            "SURFNLOS" : observer_azimuth_angles.shape[0] + 1,
+                            "SURFLOS" : [{ "CSALB" : "LAMB_OCEAN_WATER" }] * (observer_azimuth_angles.shape[0] + 1)
+                        },
+                        "SPECTRAL" : {
+                            "V1" : 300.0,
+                            "V2" : 1000.0,
+                            "DV" : 1.0,
+                            "FWHM" : 2.0,
+                            "YFLAG" : "R",
+                            "XFLAG" : "N",
+                            "FLAGS" : "NTA   T",
+                            "LBMNAM" : "T",
+                            "BMNAME" : "15_2013"
+                        },
+                        "FILEOPTIONS" : {
+                            "MSGPRNT" : "MSG_DEBUG",
+                            "JSONOPT" : "WRT_ALL",
+                            "NOPRNT" : 1,
+                            "JSONPRNT" : output_fname + ".json"
                         }
                      }
-                  ]
-               }
-    json.dump(json_data, open(fname, "w"), indent=4)
+                  }
+               ]
+    case_num += 1
+    return out_json
+
+observer_azimuth_angles = 5 * np.array(range(72), dtype=float) + 5
+observer_zenith_angles = 120 * np.ones(observer_azimuth_angles.shape, dtype=float)
 
 alts = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0])
 press = np.array([1013.25165, 898.7637, 795.0062, 701.212, 616.59973, 540.48126, 472.17044, 411.04807, 356.50916, 308.00012, 264.98944, 226.99094, 193.99063, 165.7897, 141.6997, 121.11009, 103.5195, 88.49714, 75.6517, 64.67406, 55.293205, 47.289112, 40.47482, 34.668102, 29.717024, 25.491879, 17.42908, 11.969957, 8.257732, 5.7459197, 4.041395, 2.8714008, 2.0596993, 1.4910045, 1.0885973, 0.79778993, 0.42524916, 0.21957971, 0.109290056, 0.052209016, 0.023881052, 0.010523967, 0.0044568186, 0.0018359008, 7.596596E-4, 3.201086E-4, 1.4477066E-4, 7.1041926E-5, 4.0096143E-5, 2.538202E-5])
@@ -171,7 +176,7 @@ cloud_alts = np.array([0.0, 0.09, 0.11, 2.49, 2.51])
 cliqwp_vals = np.array([0.0, 0.0, 0.68, 0.68, 0.0])
 cicewp_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
-input_file_path = "FV3_OSSE_INPUT.json"
+input_file_path = "GFDL_FV3_OSSE_INPUT.json"
 with open(input_file_path, "r") as input_file:
     json_data = json.loads(input_file.read())
 
@@ -189,21 +194,21 @@ SZA = np.array(json_data["SZA"])
 VZA = np.array(json_data["VZA"])
 RAA = np.array(json_data["RAA"])
 
-processes = []
+json_data = { "MODTRAN" : [] }
 
 for i in range(lat.shape[0]):
-    for j in range(SZA.shape[2]):
+    for j in range(SZA.shape[0]):
         print("Starting case " + str(i) + " w/ SZA " + str(j))
-        out_file_path = "FV3_modtran6_json/Libera_ADM_FV3_Input_Case_{:02d}_SZA_{:02d}.json".format(i+1, j+1)
+        out_file_path = "FV3_modtran6_json_mine/Libera_ADM_FV3_Input_Case_{:02d}_SZA_{:02d}.json".format(i+1, j+1)
         out_file_name = "Libera_ADM_FV3_Input_Case_{}".format(i+1)
 
         case_name = "Libera_ADM_FV3_Input_Case_{}_SZA_{}".format(i+1, j+1)
-        case_description = "Libera ADM Calculation from FV3 output for Profile {} and SZA = {}. Created by Daniel Feldman for Libera Science Team in cooperation with Jake Gristey, Sebastian Schmidt, Hong Chen, Maria Hakuba, and Peter Pilewskie".format(i+1, SZA[0][i][j])
+        case_description = "Libera ADM Calculation from FV3 output for Profile {} and SZA = {}. Created by Daniel Feldman for Libera Science Team in cooperation with Jake Gristey, Sebastian Schmidt, Hong Chen, Maria Hakuba, and Peter Pilewskie".format(i+1, round(SZA[j], 2))
 
         press_fv3 = np.flipud(plev)
         alts_fv3 = -7 * np.log(press / 1000)
-        temps_fv3 = np.fliplr(t_plev[:, :, i, :])
-        h2o_vals_fv3 = np.fliplr(q_plev[:, :, i, :]) * 28 / 18 * 1E6
+        temps_fv3 = np.fliplr(np.reshape(t_plev[:, i], (-1, 1)))
+        h2o_vals_fv3 = np.fliplr(np.reshape(q_plev[:, i], (-1, 1))) * 28 / 18 * 1E6
         co2_vals_fv3 = 430 * np.ones(alts.shape)
 
         n2o_vals_fv3 = scipy.interpolate.interp1d(press, n2o_vals, kind="linear")(press_fv3)
@@ -211,39 +216,41 @@ for i in range(lat.shape[0]):
         co_vals_fv3 = scipy.interpolate.interp1d(press, co_vals, kind="linear")(press_fv3)
         ch4_vals_fv3 = scipy.interpolate.interp1d(press, ch4_vals, kind="linear")(press_fv3)
 
-        fv3_observer_zenith_angles = np.zeros((VZA.shape[2] * RAA.shape[2]))
-        fv3_observer_azimuth_angles = np.zeros((VZA.shape[2] * RAA.shape[2]))
+        fv3_observer_zenith_angles = np.zeros((VZA.shape[0] * RAA.shape[0]))
+        fv3_observer_azimuth_angles = np.zeros((VZA.shape[0] * RAA.shape[0]))
 
-        for k in range(RAA.shape[2]):
-            fv3_observer_zenith_angles[k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (180 - VZA[:, i, :]).reshape(-1, order = "F")
-            fv3_observer_azimuth_angles[k * VZA.shape[2] : (k + 1) * VZA.shape[2]] = (RAA[:, i, :]).reshape(-1, order = "F")
+        for k in range(RAA.shape[0]):
+            fv3_observer_zenith_angles[k * VZA.shape[0] : (k + 1) * VZA.shape[0]] = 180 - VZA
+            fv3_observer_azimuth_angles[k * VZA.shape[0] : (k + 1) * VZA.shape[0]] = RAA[k]
 
         cloud_alts = np.array([0.0, 0.09, 0.11, 2.49, 2.51])
         cliqwp_vals = np.array([0.0, 0.0, 0.001, 0.001, 0.0])
         cicewp_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
-        p = multiprocessing.Process(target=write_modtran6_json_file, args=(out_file_path,
-                                                                           out_file_name,
-                                                                           fv3_observer_azimuth_angles,
-                                                                           fv3_observer_zenith_angles,
-                                                                           SZA[0][i][j],
-                                                                           case_name,
-                                                                           case_description,
-                                                                           16,
-                                                                           alts,
-                                                                           press,
-                                                                           temps,
-                                                                           h2o_vals,
-                                                                           co2_vals,
-                                                                           o3_vals,
-                                                                           n2o_vals,
-                                                                           co_vals,
-                                                                           ch4_vals,
-                                                                           cloud_alts,
-                                                                           cliqwp_vals,
-                                                                           cicewp_vals))
-        p.start()
-        processes.append(p)
+        case_json = write_modtran6_json_file(out_file_path,
+                                             out_file_name,
+                                             observer_azimuth_angles,
+                                             observer_zenith_angles,
+                                             SZA[j],
+                                             case_name,
+                                             case_description,
+                                             16,
+                                             alts,
+                                             press,
+                                             temps,
+                                             h2o_vals,
+                                             co2_vals,
+                                             o3_vals,
+                                             n2o_vals,
+                                             co_vals,
+                                             ch4_vals,
+                                             cloud_alts,
+                                             cliqwp_vals,
+                                             cicewp_vals)
 
-for p in processes:
-    p.join()
+        temp_data = { "MODTRAN" : [] }
+        temp_data["MODTRAN"] = case_json
+        json.dump(temp_data, open(out_file_path, "w"), indent=4)
+        json_data["MODTRAN"] += case_json
+
+json.dump(json_data, open("Libera_ADM_FV3_Input_Combined.json", "w"), indent=4)
